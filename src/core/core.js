@@ -33,12 +33,12 @@ function routeRender(routes) {
     // [ 'a=123', 'b=456' ]
     // { a: '123', b: '456' }
     const query = queryString
-    .split('&')
-    .reduce((acc, cur) => {
-        const [key, value] = cur.split('=')
-        acc[key] = value
-        return acc
-    }, {})
+        .split('&')
+        .reduce((acc, cur) => {
+            const [key, value] = cur.split('=')
+            acc[key] = value
+            return acc
+        }, {})
     history.replaceState(query, '')
 
     const currentRoute = routes.find(route => new RegExp(`${route.path}/?$`).test(hash))
@@ -57,4 +57,28 @@ export function createRouter(routes) {
         routeRender(routes)
     }
 
+}
+
+///// Store //////
+export class Store {
+    constructor(state) {
+        this.state = {}
+        this.observers = {}
+        for (const key in state) {
+            Object.defineProperty(this.state, key, {
+                get: () => state[key], // state['message']
+                set: val => {
+                    state[key] = val
+                    this.observers[key].forEach(observer => observer(val))
+                }
+            })
+        }
+    }
+
+    subscribe(key, cb) {
+        // { message: [cb1, cb2, cb3, ...] }
+        Array.isArray(this.observers[key])
+            ? this.observers[key].push(cb)
+            : this.observers[key] = [cb]
+    }
 }
